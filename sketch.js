@@ -6,19 +6,31 @@
 * jdeboi.com
 * 
 */
+let mode = 2;
+const WATER_RIPPLES = 0;
+const PULSE_OUT = 1;
+const CYCLE_BARS_DOWN = 2;
+const CYCLE_BARS_UP = 3;
+const EXPAND_BARS = 4;
+const NUM_MODES = 5;
+
+let col0, col1;
 
 // projection mapping objects
 const factor = 1.3;
+const IMG_WIDTH = 700;
 let myFont;
 let pMapper;
 let quadMap;
-let pg, sourceImage;
+let pG, sourceImage;
 let waterImg;
-let cloudsVid;
+// let cloudsVid;
+let vid;
+let isVideoPlaying = false;
 const sunRects = [];
 
 function preload() {
-    waterImg = loadImage("assets/water.jpeg");
+    // waterImg = loadImage("assets/water.jpeg");
     myFont = loadFont('assets/Roboto.ttf');
 }
 
@@ -27,23 +39,26 @@ function setup() {
 
 
 
-    cloudsVid = createVideo(['assets/clouds3d.mp4']);
-    cloudsVid.hide();
+    vid = createVideo(['assets/venice.mp4']);
+    vid.hide();
 
-    const w = 700;
+
 
     pMapper = createProjectionMapper(this);
-    quadMap = pMapper.createQuadMap(w, w);
+    quadMap = pMapper.createQuadMap(IMG_WIDTH, IMG_WIDTH);
     quadMap.textFont(myFont);
     pMapper.load("maps/map.json");
 
 
-    pg = createGraphics(w, w);
-    sourceImage = createGraphics(w, w);
+    pG = createGraphics(IMG_WIDTH, IMG_WIDTH);
+    sourceImage = createGraphics(IMG_WIDTH, IMG_WIDTH);
 
     initSunRects();
+    setRandomColors();
+    console.log(col0, col1);
     // initPerfectRects();
 }
+
 
 function draw() {
     background(0);
@@ -52,66 +67,67 @@ function draw() {
     quadMap.background(0);
     quadMap.push();
 
-    // displayWaterSunset();
-    displayPulseOut(color(0, 255, 255), color(100, 255, 0));
-    // displayPulseAround(0, 0, color(255, 0, 255), color(255, 255, 0))
-    // displayPulseAround(1, 1, color(255, 0, 255), color(255, 255, 0))
-    // displayPulseAround(2, 2, color(255, 0, 255), color(255, 255, 0))
+    // displaySun();
 
-    quadMap.ellipse(0, 0, 90 * factor);
+    // cycleCircles(quadMap, col0, col1)
+    displayMode();
+
+    // displayWaterRipples(quadMap, col0, col1);
+   
+
+    changeMode(4);
+
+
 
     quadMap.pop();
 }
 
-function displayPulseOut(c0, c1) {
-    let percent = pMapper.getOscillator(3, 0);
-
-    quadMap.fill(lerpColor(c0, c1, percent));
-    quadMap.noStroke();
-    displayCircle(0);
-
-    percent = pMapper.getOscillator(3, PI / 4);
-    quadMap.fill(lerpColor(c0, c1, percent));
-    displayCircle(1);
-
-    percent = pMapper.getOscillator(3, PI / 2);
-    quadMap.fill(lerpColor(c0, c1, percent));
-    displayCircle(2);
-
-    // percent = pMapper.getOscillator(3, PI);
-    quadMap.fill(lerpColor(c0, c1, percent));
-    quadMap.ellipse(0, 0, 90 * factor);
-}
-
-function displayPulseAround(cir, offset, c0, c1) {
-    for (const s of sunRects) {
-        let percent = pMapper.getOscillator(3, offset + s.num * .5);
-        quadMap.fill(lerpColor(c0, c1, percent));
-        quadMap.noStroke();
-        s.displayCircle(quadMap, cir);
+function displayMode() {
+    switch (mode) {
+        case WATER_RIPPLES:
+            displayWaterRipples(quadMap, col0, col1);
+            break;
+        case PULSE_OUT:
+            displayPulseOut(quadMap, col0, col1);
+            break;
+        case CYCLE_BARS_DOWN:
+            cycleFullBars(quadMap, col0, col1, false);
+            break;
+        case CYCLE_BARS_UP:
+            cycleFullBars(quadMap, col0, col1, true);
+            break;
+        case EXPAND_BARS:
+            expandBars(quadMap, col0, col1, 0);
+            break;
+        default:
+            cycleFullBars(quadMap, col0, col1, true);
+            break;
     }
 }
 
-function displayCircle(cir) {
-    // quadMap.translate(-quadMap.width / 2, -quadMap.height / 2);
-    for (const s of sunRects) {
-        s.displayCircle(quadMap, cir);
+function changeMode(numSeconds) {
+    if (frameCount % (numSeconds * 60) == 0) {
+        setRandomColors();
+        mode++;
+        mode %= NUM_MODES;
     }
 }
+
 
 function displayWaterSunset() {
-    pg.clear();
-    pg.push();
-    pg.translate(pg.width / 2, pg.height / 2);
-    pg.fill(0);
+    pG.clear();
+    pG.push();
+    pG.translate(pG.width / 2, pG.height / 2);
+    pG.fill(0);
     for (const s of sunRects) {
-        s.display(pg);
+        s.display(pG);
     }
-    pg.ellipse(0, 0, 90 * factor);
-    pg.pop();
+    pG.ellipse(0, 0, 90 * factor);
+    pG.pop();
 
-    sourceImage.image(cloudsVid, 0, 0);
-    (masked = sourceImage.get()).mask(pg);
+    let w = IMG_WIDTH * (16 / 9);
+    sourceImage.image(vid, 0, 0, w, IMG_WIDTH);
+    (masked = sourceImage.get()).mask(pG);
 
     quadMap.stroke(255);
     quadMap.fill(255);
@@ -119,6 +135,56 @@ function displayWaterSunset() {
     quadMap.translate(-quadMap.width / 2, -quadMap.height / 2);
     quadMap.image(masked, 0, 0);
     quadMap.pop();
+
+    let c0 = color(245, 93, 66, 150);
+    let c1 = color(255, 0, 255, 100);
+    displayPulseAround(0, 0, c0, c1);
+    displayPulseAround(1, 1, c0, c1);
+    displayPulseAround(2, 2, c0, c1);
+
+    // quadMap.stroke(c1);
+    // quadMap.fill(c1);
+    // quadMap.ellipse(0, 0, 90 * factor);
+}
+
+
+function displaySun() {
+    pG.clear();
+    pG.push();
+    pG.translate(pG.width / 2, pG.height / 2);
+    pG.fill(0);
+    for (const s of sunRects) {
+        s.display(pG);
+    }
+    pG.ellipse(0, 0, 90 * factor);
+    pG.pop();
+
+    let w = IMG_WIDTH * (16 / 9);
+    let dx = IMG_WIDTH / 2 - w / 2 + 20 - map(vid.time(), 0, vid.duration(), 0, 17);
+    let dy = -7 - map(vid.time(), 0, vid.duration(), 0, 17);
+    sourceImage.image(vid, dx, dy, w, IMG_WIDTH);
+    (masked = sourceImage.get()).mask(pG);
+
+    quadMap.stroke(255);
+    quadMap.fill(255);
+    quadMap.push();
+    quadMap.translate(-quadMap.width / 2, -quadMap.height / 2);
+    quadMap.image(masked, 0, 0);
+    quadMap.pop();
+
+    // let c0 = color(255, 0, 255, 255);
+    // let c1 = color(255, 150, 255, 50);
+    // displayPulseAround(0, 0, c0, c1);
+    // displayPulseAround(1, 1, c0, c1);
+    // displayPulseAround(2, 2, c0, c1);
+
+    // quadMap.stroke(c1);
+    // quadMap.fill(c1);
+    // quadMap.ellipse(0, 0, 90 * factor);
+
+
+
+
 }
 
 
@@ -131,18 +197,18 @@ function initSunRects() {
 }
 
 function initPerfectRects() {
-    let thickness = 15*factor;
+    let thickness = 15 * factor;
     let spacing = thickness * 2;
 
     fill(0);
     stroke(0);
-    let start = 4*factor;
+    let start = 4 * factor;
     let radBig = ((start * 2) + 14 * spacing) / 2;
     let radMed = ((start * 2) + 11 * spacing) / 2;
     let radSmall = ((start * 2) + 8 * spacing) / 2;
-    initSunRect(0, radBig, radBig - 60*factor, spacing, start, (n) => thickness * .6);
-    initSunRect(1, radMed, radMed - 60*factor, spacing, start, (n) => thickness * .6);
-    initSunRect(2, radSmall, radSmall - 60*factor, spacing, start, (n) => thickness * .6);
+    initSunRect(0, radBig, radBig - 60 * factor, spacing, start, (n) => thickness * .6);
+    initSunRect(1, radMed, radMed - 60 * factor, spacing, start, (n) => thickness * .6);
+    initSunRect(2, radSmall, radSmall - 60 * factor, spacing, start, (n) => thickness * .6);
 }
 
 function initSunRect(id,
@@ -155,18 +221,21 @@ function initSunRect(id,
     let y = outerRad - offset;
     let n = 0;
     while (y > -outerRad) {
-        let h = getThickness(n++);
+        let h = getThickness(n);
         let ang0 = asin(y / outerRad);
         let x0 = -outerRad * cos(ang0) - dx;
         let ang1 = asin(y / innerRad);
         let x1 = -innerRad * cos(ang1);
 
         // circle lines all the way across
-        if (abs(y) >= innerRad) {
-            sunRects.push(new SunRect(-x0, y - h / 2, x0 * 2, h, id, n));
-        } else {
-            sunRects.push(new SunRect(x0, y - h / 2, -x0 + x1, h, id, n));
-            sunRects.push(new SunRect(-x0, y - h / 2, x0 - x1, h, id, n));
+        if (!isNaN(x0)) {
+            if (abs(y) >= innerRad) {
+                sunRects.push(new SunRect(-x0, y - h / 2, x0 * 2, h, id, n, true));
+            } else {
+                sunRects.push(new SunRect(x0, y - h / 2, -x0 + x1, h, id, n));
+                sunRects.push(new SunRect(-x0, y - h / 2, x0 - x1, h, id, n));
+            }
+            n++;
         }
         y -= spacing;
     }
@@ -227,10 +296,19 @@ function keyPressed() {
 
 
 function mousePressed() {
-    cloudsVid.loop();
+    isVideoPlaying = true;
+    vid.speed(0.7);
+    vid.loop();
 }
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 }
 
+
+function setRandomColors() {
+    colorMode(HSB, 100);
+    col0 = color(random(100), 100, random(100));
+    col1 = color(random(100), 100, 100);
+    colorMode(RGB, 255);
+}
