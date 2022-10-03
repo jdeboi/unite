@@ -1,24 +1,87 @@
+
+let id = 0;
 class SunRect {
 
-    constructor(x, y, w, h, cir, num, isOne = false) {
-        this.x = x;
-        this.y = y;
+    // constructor(x, y, w, h, cir, num, isOne = false) {
+    constructor(pts, w, h, cir, num, isOne = false) {
+        this.id = id++;
+        let fac = 1;
+        this.x = pts[0];
+        this.y = pts[1]; //y+(1-fac)*h/2;
+        this.pts = pts;
         this.w = w;
-        this.h = h;
+        this.h = h * fac;
+
         this.cir = cir;
         this.num = num;
         this.isOne = isOne;
+
+        this.fillCol = color(0);
+        this.strokeCol = color(0);
+
+        this.lineMapNum = -1;
+        this.alph = 255;
+        // if (cir == 0 && num == 0) {
+        //     console.log("bot", y+h)
+        // }
+        // else if (cir == 0 && num == 14) {
+        //     console.log("top", y)
+        // }
+        // else if (cir == 0 && num == 7) {
+        //     console.log("left", x, w);
+        // }
+    }
+
+
+    setColor(fc = currentFill, sc = currentStroke, al = 255) {
+        this.fillCol = fc;
+        this.strokeCol = sc;
+        this.alph = al;
+    }
+
+    getColors() {
+        return [this.fillCol, this.strokeCol];
+    }
+
+    displayShape(pg) {
+        pg.beginShape();
+        for (let i = 0; i < this.pts.length; i += 2) {
+            pg.vertex(this.pts[i], this.pts[i + 1]);
+        }
+        pg.endShape();
     }
 
     display(pg) {
+        if (!isCalibratingMapper() && this.lineMapNum > -1)
+            return;
+
+        // if ((this.cir == 0 &&this.num > 11) || (this.cir == 1 && this.num > 9)) {
         pg.push();
         pg.translate(0, 0, .4 * this.cir);
-        pg.rect(this.x, this.y, this.w, this.h);
+
+        // pg.rect(this.x, this.y, this.w, this.h);
+        this.displayShape(pg);
+
         pg.pop();
+        // }
         // this.displayID(pg);
     }
 
+    displayOverUnderLine(pg) {
+        pg.stroke(0);
+        pg.strokeWeight(4);
+        // underline
+        pg.line(this.x, this.y + this.h, this.x + this.w, this.y + this.h)
+        // overline
+        if (this.cir == 0) {
+            pg.line(this.x, this.y, this.x + this.w, this.y)
+        }
+    }
+
     displayPortion(pg, percent, mode) {
+        if (this.lineMapNum > -1)
+            return;
+
         let w = percent * this.w;
         pg.push();
         pg.translate(0, 0, .4 * this.cir);
@@ -52,6 +115,9 @@ class SunRect {
     }
 
     displayPortion2(pg, percent) {
+        if (this.lineMapNum > -1)
+            return;
+
         let w = percent * this.w;
         pg.push();
         pg.translate(0, 0, .4 * this.cir);
@@ -66,7 +132,7 @@ class SunRect {
     }
 
 
-    displayWater(pg, c0, c1) {
+    displayWater(pg, c0, c1, al) {
         let maxLev = .5 * PI;
         let levels = [
             [0, 2, 0],
@@ -96,7 +162,12 @@ class SunRect {
             let per = .5 + .5 * sin(millis() / 500 - l[0]);
             let col = lerpColor(c0, c1, per);
             pg.fill(col);
-            pg.stroke(0, 0, col);
+            pg.stroke(col);
+            
+            setCurrentColors(col, col);
+
+            if (this.lineMapNum > -1)
+                return;
             displayBarLevel(pg, l[1], l[2]);
         }
 
@@ -105,6 +176,7 @@ class SunRect {
     displayID(pg) {
         pg.fill(255);
         pg.noStroke();
-        pg.text(this.cir + "," + this.num, this.x, this.y);
+        // pg.text(this.cir + "," + this.num, this.x, this.y);
+        pg.text(this.id, this.x, this.y);
     }
 }

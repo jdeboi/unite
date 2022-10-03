@@ -13,6 +13,7 @@ function displayBar(pg, cir, num) {
         for (let i = 0; i < cir; i++) {
             n += CIR_LENS[i];
         }
+        sunRects[n + num].setColor(currentFill, currentStroke);
         sunRects[n + num].display(pg);
     }
 
