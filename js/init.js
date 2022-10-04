@@ -144,3 +144,11 @@ function initSunLines() {
         sunRects[sunRectID].lineMapNum = i;
     }
 }
+
+function initSunQuads() {
+    for (let i = 0; i < quadsOff.length; i++) {
+        let sunRectID = quadsOff[i];
+        sunQuads.push(new SunQuad(i, sunRectID));
+        sunRects[sunRectID].lineMapNum = i;
+    }
+}

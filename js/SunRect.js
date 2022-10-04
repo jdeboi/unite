@@ -20,6 +20,8 @@ class SunRect {
         this.strokeCol = color(0);
 
         this.lineMapNum = -1;
+        this.quadMapNum = -1;
+        
         this.alph = 255;
         // if (cir == 0 && num == 0) {
         //     console.log("bot", y+h)
@@ -29,6 +31,11 @@ class SunRect {
         // }
         // else if (cir == 0 && num == 7) {
         //     console.log("left", x, w);
+        // }
+
+        // if (this.id == 25) {
+        //     console.log(this.x, this.y, this.w, this.h);
+            // -164.73008225579207 -429.5 329.46016451158414 43
         // }
     }
 

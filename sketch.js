@@ -11,7 +11,7 @@ const quadsOff = [25, 44, 6, 7, 28, 4, 5, 27, 2, 3, 26, 1, 0];
 // const quadsOff = [];
 
 const factor = 2;
-const TIME_CHANGE = 16;
+const TIME_CHANGE = 4;//16;
 const TIME_CHANGE_COLOR = TIME_CHANGE/2;
 // TODO - BUG IN LIBRARY; should be 20 cells, not 19... ????
 const IMG_WIDTH = 286 * 2 * (20 / 19) * factor / 1.3;
@@ -27,7 +27,7 @@ const CYCLE_BARS_UP = 3;
 const NUM_MODES = 4;
 const EXPAND_BARS = 44;
 const SUNSET_VID = 54; // make sure to click
-let mode = 0;
+let mode = 3;
 
 let col0, col1;
 ////////////////////////
@@ -44,6 +44,9 @@ let vid;
 let isVideoPlaying = false;
 const sunRects = [];
 const sunLines = [];
+const sunQuads = [];
+let ellipseSunQuad;
+let sunColor;
 
 function preload() {
     // waterImg = loadImage("assets/water.jpeg");
@@ -53,7 +56,7 @@ function preload() {
 function setup() {
     createCanvas(windowWidth, windowHeight, WEBGL);
 
-    vid = createVideo(['assets/venice.mp4']);
+    vid = createVideo(['assets/lake.mp4']);
     vid.hide();
 
 
@@ -61,7 +64,7 @@ function setup() {
     quadMap = pMapper.createQuadMap(IMG_WIDTH, IMG_HEIGHT);
     quadMap.textFont(myFont);
 
-
+    ellipseSunQuad = pMapper.createQuadMap(90*factor, 90*factor);
     // pMapper.load("maps/map.json");
 
 
@@ -70,10 +73,13 @@ function setup() {
 
     currentFill = color(0);
     currentStroke = color(0);
+    sunColor = color(0);
+
     setRandomColors();
 
     initSunRects(2);
-    initSunLines();
+    // initSunLines();
+    initSunQuads();
     // initPerfectRects();
 }
 
@@ -104,8 +110,9 @@ function draw() {
 
     quadMap.pop();
 
-    displaySunLines();
-
+    // displaySunLines();
+    displayEllipseSunQuad();
+    displaySunQuads();
 
     // hideHalf();
 
@@ -115,6 +122,13 @@ function displaySunLines() {
     for (let i = 0; i < sunLines.length; i++) {
         // sunLines[i].displayCalibrating();
         sunLines[i].display();
+    }
+}
+
+function displaySunQuads() {
+    for (let i = 0; i < sunQuads.length; i++) {
+        // sunQuads[i].displayCalibrating();
+        sunQuads[i].display();
     }
 }
 
@@ -148,9 +162,9 @@ function displayMode() {
         // case EXPAND_BARS:
         //     expandBars(quadMap, col0, col1, 0);
         //     break;
-        // case SUNSET_VID:
-        //     displaySunsetVid();
-        //     break;
+        case SUNSET_VID:
+            displaySunsetVid();
+            break;
         default:
             cycleFullBars(quadMap, col0, col1, true);
             break;
@@ -172,8 +186,19 @@ function changeColorMode(numSeconds) {
 }
 
 function displaySunEllipse(pg) {
-    let w = 90 * factor;
-    pg.ellipse(0, 0, w, w, 40);
+    sunColor = currentFill;
+    // let w = 90 * factor;
+    // pg.ellipse(0, 0, w, w, 40);
+}
+function displayEllipseSunQuad() {
+    ellipseSunQuad.clear();
+    ellipseSunQuad.push();
+    ellipseSunQuad.background(0);
+    // ellipseSunQuad.translate(-ellipseSunQuad.width/2, -ellipseSunQuad/height/2);
+    ellipseSunQuad.fill(sunColor);
+    ellipseSunQuad.stroke(sunColor);
+    ellipseSunQuad.ellipse(0, 0, ellipseSunQuad.width*.9, ellipseSunQuad.width*.9, 40);
+    ellipseSunQuad.pop();
 }
 
 function keyPressed() {

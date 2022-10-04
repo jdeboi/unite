@@ -127,6 +127,7 @@ function displayWaterRipples(pg, c0, c1, al = 255) {
     let sunC = color(255, 200, 0, al);
     pg.fill(sunC);
     pg.stroke(sunC);
+    setCurrentColors(sunC, sunC);
     displaySunEllipse(pg);
 
     let water0 = color(0, 50, 255, al);
